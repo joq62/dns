@@ -136,7 +136,7 @@ handle_call({heart_beat}, _From, State) ->
     NewDnsList=[DnsInfo||DnsInfo<-DnsList,
 		      (timer:now_diff(Now,DnsInfo#dns_info.time_stamp)/1000)<?INACITIVITY_TIMEOUT],
     NewState=State#state{dns_list=NewDnsList},
-    io:format("Services availible  ~p~n",[{?MODULE,?LINE,NewDnsList}]),
+%    io:format("Services availible  ~p~n",[{?MODULE,?LINE,NewDnsList}]),
     Reply=ok,
    {reply, Reply, NewState};
     
