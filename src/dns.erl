@@ -167,7 +167,7 @@ handle_cast({dns_register,DnsInfo}, State) ->
     {noreply, NewState};
 
 handle_cast({de_dns_register,DnsInfo}, State) ->
-    io:format("~p~n",[{?MODULE,?LINE,de_register,DnsInfo}]),
+  %  io:format("~p~n",[{?MODULE,?LINE,de_register,DnsInfo}]),
     DnsList=State#state.dns_list,
     NewDnsList=dns_lib:de_dns_register(DnsInfo,DnsList),
     NewState=State#state{dns_list=NewDnsList},
