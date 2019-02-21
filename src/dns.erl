@@ -98,15 +98,17 @@ init([]) ->
     % Glurk ta bort app_start
     {ok,MyIp}=application:get_env(ip_addr),
     {ok,Port}=application:get_env(port),
-    {ok,ServiceId}=application:get_env(service_id),
+    {ok,ApplicationId}=application:get_env(application_id),
     {ok,DnsIp}=application:get_env(dns_ip_addr),
     {ok,DnsPort}=application:get_env(dns_port),
+    {ok,ExportedServices}=application:get_env(exported_services),
 
-    DnsInfo=#dns_info{time_stamp="not_initiaded_time_stamp",
+    
+    DnsInfo=[#dns_info{time_stamp="not_initiaded_time_stamp",
 			service_id = ServiceId,
 			ip_addr=MyIp,
 			port=Port
-		       },
+		       }||ServiceId<-ExportedServices],
     spawn(fun()-> local_heart_beat(?HEARTBEAT_INTERVAL) end), 
     io:format("Started Service  ~p~n",[{?MODULE}]),
    {ok, #state{dns_list=[],dns_info=DnsInfo,dns_addr={dns,DnsIp,DnsPort}}}. 
