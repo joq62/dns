@@ -104,14 +104,19 @@ init([]) ->
     {ok,ExportedServices}=application:get_env(exported_services),
 
     
-    DnsInfo=[#dns_info{time_stamp="not_initiaded_time_stamp",
-			service_id = ServiceId,
-			ip_addr=MyIp,
-			port=Port
-		       }||ServiceId<-ExportedServices],
+   % DnsInfo=[#dns_info{time_stamp="not_initiaded_time_stamp",
+%			service_id = ServiceId,
+%			ip_addr=MyIp,
+%			port=Port
+%		       }||ServiceId<-ExportedServices],
     spawn(fun()-> local_heart_beat(?HEARTBEAT_INTERVAL) end), 
+
+    DnsInfo=#dns_info{time_stamp=erlang:now(),service_id="dns",ip_addr=DnsIp,port=DnsPort,schedule_info=na},
+
     io:format("Started Service  ~p~n",[{?MODULE}]),
-   {ok, #state{dns_list=[],dns_info=DnsInfo,dns_addr={dns,DnsIp,DnsPort}}}. 
+
+
+   {ok, #state{dns_list=[DnsInfo],dns_info=DnsInfo,dns_addr={dns,DnsIp,DnsPort}}}. 
     
 %% --------------------------------------------------------------------
 %% Function: handle_call/3
@@ -134,10 +139,20 @@ handle_call({get_instances,WantedServiceStr},_From, State) ->
 
 handle_call({heart_beat}, _From, State) ->
     DnsList=State#state.dns_list,
+    
     Now=erlang:now(),
     NewDnsList=[DnsInfo||DnsInfo<-DnsList,
-		      (timer:now_diff(Now,DnsInfo#dns_info.time_stamp)/1000)<?INACITIVITY_TIMEOUT],
-    NewState=State#state{dns_list=NewDnsList},
+			 (timer:now_diff(Now,DnsInfo#dns_info.time_stamp)/1000)<?INACITIVITY_TIMEOUT,
+			 false==(DnsInfo#dns_info.service_id=:="dns")],
+
+    % Glurk to add dns 
+    
+    
+    {dns,DnsIp,DnsPort}=State#state.dns_addr,
+    DnsInfo=#dns_info{time_stamp=erlang:now(),service_id="dns",ip_addr=DnsIp,port=DnsPort,schedule_info=na},
+    AddedDnsNewDnsList=[DnsInfo|NewDnsList],
+
+    NewState=State#state{dns_list=AddedDnsNewDnsList},
 %    io:format("Services availible  ~p~n",[{?MODULE,?LINE,NewDnsList}]),
     Reply=ok,
    {reply, Reply, NewState};
@@ -165,6 +180,7 @@ handle_cast({dns_register,DnsInfo}, State) ->
     DnsList=State#state.dns_list,
     NewDnsList=dns_lib:dns_register(DnsInfo,DnsList),
     NewState=State#state{dns_list=NewDnsList},
+  
   %  io:format("~p~n",[{?MODULE,?LINE,register,NewState}]),
     {noreply, NewState};
 
